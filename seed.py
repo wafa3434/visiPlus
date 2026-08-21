@@ -2,7 +2,7 @@
 VisiPulse - سكربت التهيئة الأولية لقاعدة البيانات
 - ينشئ الجداول ويفعّل قيود سجل التدقيق غير القابل للتعديل
 - يزرع 3 حسابات أولية مستقلة (لكل حساب اسم مستخدم، بريد، وكلمة مرور خاصة)
-- يزرع بيانات تجريبية (تذاكر، إنذارات، أصول، مؤشرات أداء، قرارات) لتجربة النظام مباشرة
+- يزرع بيانات تجريبية لتجربة النظام مباشرة
 
 التشغيل: python seed.py
 """
@@ -16,7 +16,6 @@ def _create_or_update_user(session, username, full_name, role, department, email
     existing_user = session.query(User).filter(User.username == username).first()
     
     if existing_user:
-        # تحديث بيانات المستخدم وكلمة المرور الخاصة به
         existing_user.full_name = full_name
         existing_user.role = role
         existing_user.department = department
@@ -25,10 +24,9 @@ def _create_or_update_user(session, username, full_name, role, department, email
         existing_user.email_enc = encrypt_field(email)
         existing_user.phone_enc = encrypt_field(phone)
         session.commit()
-        print(f"[+] تم تحديث المستخدم: {username:<20} | كلمة المرور: {raw_password}")
+        print(f"تم تحديث المستخدم: {username} | كلمة المرور: {raw_password}")
         return existing_user
 
-    # إنشاؤه إذا لم يكن موجوداً
     user = User(
         username=username,
         full_name=full_name,
@@ -41,7 +39,7 @@ def _create_or_update_user(session, username, full_name, role, department, email
     )
     session.add(user)
     session.commit()
-    print(f"[+] تم إنشاء المستخدم: {username:<20} | كلمة المرور: {raw_password}")
+    print(f"تم إنشاء المستخدم: {username} | كلمة المرور: {raw_password}")
     return user
 
 
@@ -92,7 +90,6 @@ def seed():
     log_action(session, "system", "system", "تهيئة النظام", "تم ضبط الحسابات الأولية المستقلة", category="نظام")
     print("=" * 78)
 
-    # إضافة البيانات التجريبية إذا كانت الجداول فارغة
     if session.query(Ticket).count() == 0:
         session.add_all([
             Ticket(ticket_number="TCK-0001", title="عطل في جهاز عرض الأشعة",
@@ -143,7 +140,7 @@ def seed():
     if session.query(Decision).count() == 0:
         session.add_all([
             Decision(title="اعتماد ترقية الجدار الناري المركزي",
-                     description="ترقية ضرورية لمواكبة متطلبات الهيئة الوطنية للأمن السيبراني (NCA)",
+                     description="ترقية ضرورية لمواكبة متطلبات الهيئة الوطنية للأمن السيبراني",
                      category="أمن سيبراني", status="بانتظار الاعتماد", submitted_by="it_admin"),
             Decision(title="اعتماد خطة التعافي من الكوارث السنوية",
                      description="مراجعة واعتماد خطة استمرارية الأعمال والتعافي من الكوارث للعام القادم",
@@ -152,7 +149,7 @@ def seed():
 
     session.commit()
     session.close()
-    print("تم تحديث وتجهيز قاعدة البيانات بالحسابات المستقلة بنجاح ✅")
+    print("تم تحديث وتجهيز قاعدة البيانات بالحسابات المستقلة بنجاح")
 
 
 if __name__ == "__main__":
