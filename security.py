@@ -18,15 +18,17 @@ load_dotenv()
 
 # ============================================================
 # التشفير - Fernet (تشفير متماثل معتمد على مفتاح البيئة)
-# ============================================================
-ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
-if not ENCRYPTION_KEY:
-    raise RuntimeError(
-        "ENCRYPTION_KEY غير موجود في ملف .env — قم بإنشائه عبر: python generate_key.py "
-        "ثم أضفه إلى ملف .env كما هو موضح في .env.example"
-    )
-_fernet = Fernet(ENCRYPTION_KEY.encode())
+import os
+import streamlit as st
 
+# دعم قراءة مفتاح التشفير من Streamlit Secrets أو من النظام المحلي
+try:
+    ENCRYPTION_KEY = st.secrets["VISIPULSE_ENCRYPTION_KEY"]
+except (KeyError, FileNotFoundError):
+    ENCRYPTION_KEY = os.getenv("VISIPULSE_ENCRYPTION_KEY")
+
+if not ENCRYPTION_KEY:
+    raise RuntimeError("خطأ حرج: لم يتم العثور على مفتاح التشفير VISIPULSE_ENCRYPTION_KEY.")
 
 def encrypt_field(value):
     """يشفّر قيمة نصية حساسة (بريد إلكتروني، هاتف، عنوان IP...) قبل تخزينها."""
