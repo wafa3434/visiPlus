@@ -6,7 +6,7 @@ from database import init_db, get_session
 from models import User, UserRole, PasswordHistory
 from security import (
     verify_password, hash_password, validate_password_policy,
-    PASSWORD_HISTORY_COUNT, SESSION_IDLE_MINUTES, encrypt_field,
+    PASSWORD_HISTORY_COUNT, SESSION_IDLE_MINUTES,
 )
 from auth import attempt_login, check_session_timeout, touch_session, logout
 from audit import log_action
@@ -72,7 +72,6 @@ html, body, [class*="css"] {{
 section[data-testid="stSidebar"] {{ direction: {'rtl' if current_lang == 'ar' else 'ltr'}; text-align: {'right' if current_lang == 'ar' else 'left'}; }}
 div[data-testid="stForm"] {{ direction: {'rtl' if current_lang == 'ar' else 'ltr'}; text-align: {'right' if current_lang == 'ar' else 'left'}; }}
 
-/* توسيط حاوية الشعار الرئيسي وتحسين جودته */
 .stImage {{
     display: flex;
     justify-content: center;
@@ -94,32 +93,6 @@ ROLE_LABELS = {"it": "تقنية المعلومات", "executive": "الإدار
 @st.cache_resource
 def _bootstrap_db():
     init_db()
-    # التهيئة التلقائية وزرع الحسابات وكلمات المرور المحدثة عند التشغيل
-    session = get_session()
-    users_data = [
-        ("it_admin", "مدير تقنية المعلومات", UserRole.IT, "تقنية المعلومات", "it_admin@hospital.local", "0500000001", "ItAdmin@2026_Secure!"),
-        ("hospital_director", "مدير المستشفى", UserRole.EXECUTIVE, "الإدارة العليا", "director@hospital.local", "0500000002", "Director@2026_Secure!"),
-        ("employee1", "موظف تجريبي", UserRole.EMPLOYEE, "قسم الطوارئ", "employee1@hospital.local", "0500000003", "Employee@2026_Secure!")
-    ]
-    for username, full_name, role, department, email, phone, raw_pass in users_data:
-        user = session.query(User).filter(User.username == username).first()
-        if user:
-            user.password_hash = hash_password(raw_pass)
-            user.must_change_password = False
-        else:
-            new_user = User(
-                username=username,
-                full_name=full_name,
-                role=role,
-                department=department,
-                password_hash=hash_password(raw_pass),
-                must_change_password=False,
-                email_enc=encrypt_field(email),
-                phone_enc=encrypt_field(phone)
-            )
-            session.add(new_user)
-    session.commit()
-    session.close()
     return True
 
 _bootstrap_db()
@@ -250,7 +223,7 @@ def main():
             st.session_state.username = st.session_state.get("temp_username")
             st.session_state.role = st.session_state.get("temp_role")
         
-        _login_screen(session)
+        _login_clean = _login_screen(session)
         return
 
     if check_session_timeout():
