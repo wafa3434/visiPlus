@@ -1,48 +1,47 @@
 """
 VisiPulse - سكربت التهيئة الأولية لقاعدة البيانات
 - ينشئ الجداول ويفعّل قيود سجل التدقيق غير القابل للتعديل
-- يزرع 3 حسابات أولية (تقنية معلومات / إدارة عليا / موظف) بكلمات مرور مؤقتة عشوائية
-  يُطلب تغييرها إجبارياً عند أول تسجيل دخول
+- يزرع 3 حسابات أولية مستقلة (لكل حساب اسم مستخدم، بريد، وكلمة مرور خاصة)
 - يزرع بيانات تجريبية (تذاكر، إنذارات، أصول، مؤشرات أداء، قرارات) لتجربة النظام مباشرة
 
 التشغيل: python seed.py
 """
-import secrets
-import string
-
 from database import init_db, get_session
 from models import User, UserRole, Ticket, Alert, SystemAsset, KPI, Decision
 from security import hash_password, encrypt_field
 from audit import log_action
 
 
-def _random_temp_password(length: int = 14) -> str:
-    """يولّد كلمة مرور مؤقتة عشوائية مطابقة للسياسة (يُجبر المستخدم على تغييرها لاحقاً)."""
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-    while True:
-        pwd = "".join(secrets.choice(alphabet) for _ in range(length))
-        if (any(c.islower() for c in pwd) and any(c.isupper() for c in pwd)
-                and any(c.isdigit() for c in pwd) and any(c in "!@#$%^&*" for c in pwd)):
-            return pwd
+def _create_or_update_user(session, username, full_name, role, department, email, phone, raw_password):
+    existing_user = session.query(User).filter(User.username == username).first()
+    
+    if existing_user:
+        # تحديث بيانات المستخدم وكلمة المرور الخاصة به
+        existing_user.full_name = full_name
+        existing_user.role = role
+        existing_user.department = department
+        existing_user.password_hash = hash_password(raw_password)
+        existing_user.must_change_password = False
+        existing_user.email_enc = encrypt_field(email)
+        existing_user.phone_enc = encrypt_field(phone)
+        session.commit()
+        print(f"[+] تم تحديث المستخدم: {username:<20} | كلمة المرور: {raw_password}")
+        return existing_user
 
-
-def _create_user(session, username, full_name, role, department, email, phone):
-    if session.query(User).filter(User.username == username).first():
-        return None
-    temp_pwd = _random_temp_password()
+    # إنشاؤه إذا لم يكن موجوداً
     user = User(
         username=username,
         full_name=full_name,
         role=role,
         department=department,
-        password_hash=hash_password(temp_pwd),
-        must_change_password=True,
+        password_hash=hash_password(raw_password),
+        must_change_password=False,
         email_enc=encrypt_field(email),
         phone_enc=encrypt_field(phone),
     )
     session.add(user)
     session.commit()
-    print(f"[+] تم إنشاء المستخدم: {username:<20} | الدور: {role.value:<10} | كلمة المرور المؤقتة: {temp_pwd}")
+    print(f"[+] تم إنشاء المستخدم: {username:<20} | كلمة المرور: {raw_password}")
     return user
 
 
@@ -50,22 +49,50 @@ def seed():
     init_db()
     session = get_session()
 
-    if session.query(User).count() == 0:
-        print("=" * 78)
-        print("إنشاء الحسابات الأولية - احتفظ بكلمات المرور المؤقتة أدناه في مكان آمن")
-        print("سيُطلب من كل مستخدم تغيير كلمة المرور إجبارياً عند أول تسجيل دخول")
-        print("=" * 78)
-        _create_user(session, "it_admin", "مدير تقنية المعلومات", UserRole.IT,
-                     "تقنية المعلومات", "it_admin@hospital.local", "0500000001")
-        _create_user(session, "hospital_director", "مدير المستشفى", UserRole.EXECUTIVE,
-                     "الإدارة العليا", "director@hospital.local", "0500000002")
-        _create_user(session, "employee1", "موظف تجريبي", UserRole.EMPLOYEE,
-                     "قسم الطوارئ", "employee1@hospital.local", "0500000003")
-        log_action(session, "system", "system", "تهيئة النظام", "تم إنشاء الحسابات الأولية", category="نظام")
-        print("=" * 78)
-    else:
-        print("يوجد مستخدمون بالفعل في قاعدة البيانات — تم تخطي إنشاء الحسابات الأولية")
+    print("=" * 78)
+    print("إعداد وتحديث الحسابات الأولية المستقلة للنظام")
+    print("=" * 78)
+    
+    # 1. حساب تقنية المعلومات
+    _create_or_update_user(
+        session, 
+        username="it_admin", 
+        full_name="مدير تقنية المعلومات", 
+        role=UserRole.IT,
+        department="تقنية المعلومات", 
+        email="it_admin@hospital.local", 
+        phone="0500000001",
+        raw_password="ItAdmin@2026_Secure!"
+    )
+    
+    # 2. حساب الإدارة العليا
+    _create_or_update_user(
+        session, 
+        username="hospital_director", 
+        full_name="مدير المستشفى", 
+        role=UserRole.EXECUTIVE,
+        department="الإدارة العليا", 
+        email="director@hospital.local", 
+        phone="0500000002",
+        raw_password="Director@2026_Secure!"
+    )
+    
+    # 3. حساب الموظف
+    _create_or_update_user(
+        session, 
+        username="employee1", 
+        full_name="موظف تجريبي", 
+        role=UserRole.EMPLOYEE,
+        department="قسم الطوارئ", 
+        email="employee1@hospital.local", 
+        phone="0500000003",
+        raw_password="Employee@2026_Secure!"
+    )
+    
+    log_action(session, "system", "system", "تهيئة النظام", "تم ضبط الحسابات الأولية المستقلة", category="نظام")
+    print("=" * 78)
 
+    # إضافة البيانات التجريبية إذا كانت الجداول فارغة
     if session.query(Ticket).count() == 0:
         session.add_all([
             Ticket(ticket_number="TCK-0001", title="عطل في جهاز عرض الأشعة",
@@ -125,7 +152,7 @@ def seed():
 
     session.commit()
     session.close()
-    print("تم تجهيز قاعدة البيانات والبيانات التجريبية بنجاح ✅")
+    print("تم تحديث وتجهيز قاعدة البيانات بالحسابات المستقلة بنجاح ✅")
 
 
 if __name__ == "__main__":
