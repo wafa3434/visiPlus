@@ -1,4 +1,4 @@
-إليك الكود كاملاً بعد تحديث دالة _login_screen بحيث يظهر الشعار في الأعلى بمفرده وبشكل منسق ومرتب، تليه العناوين ثم نموذج الدخول بالأسفل:
+
 from datetime import datetime
 import random
 import streamlit as st
