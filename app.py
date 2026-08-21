@@ -1,3 +1,4 @@
+إليك الكود كاملاً بعد تحديث دالة _login_screen بحيث يظهر الشعار في الأعلى بمفرده وبشكل منسق ومرتب، تليه العناوين ثم نموذج الدخول بالأسفل:
 from datetime import datetime
 import random
 import streamlit as st
@@ -100,15 +101,17 @@ _bootstrap_db()
 
 
 def _login_screen(session):
-    # استخدام الأعمدة لتوسيط الشعار والعناوين بالمنتصف تماماً بدقة
+    # 1. عرض الشعار في الأعلى بمفرده
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         try:
             st.image("logo.jpeg", width=180)
         except Exception:
             pass
-        st.markdown(f"<h3 style='text-align: center;'>{t['title']}</h3>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center; color: gray;'>{t['subtitle']}</p>", unsafe_allow_html=True)
+            
+    # 2. العناوين تحت الشعار مباشرة
+    st.markdown(f"<h3 style='text-align: center;'>{t['title']}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align: center; color: gray;'>{t['subtitle']}</p>", unsafe_allow_html=True)
             
     st.divider()
 
