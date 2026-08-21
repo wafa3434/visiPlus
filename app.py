@@ -19,7 +19,17 @@ st.set_page_config(
     page_icon="logo.jpeg",
     layout="wide",
 )
+st.set_page_config(
+    page_title="VisiPulse | نظام الإنذار المبكر وحوكمة البنية التحتية",
+    page_icon="logo.jpeg",
+    layout="wide",
+)
 
+# --- أضيفي كود عرض اللوقو هنا ---
+col1, col2, col3 = st.columns([2, 1, 2])
+with col2:
+    st.image("logo.jpeg", width=150)
+# -----------------------------
 translations = {
     "ar": {
         "title": "VisiPulse - نظام الإنذار المبكر وحوكمة البنية التحتية",
