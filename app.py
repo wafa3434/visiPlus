@@ -71,6 +71,20 @@ html, body, [class*="css"] {{
 [data-testid="stMetricValue"], [data-testid="stMetricDelta"] {{ direction: ltr; }}
 section[data-testid="stSidebar"] {{ direction: {'rtl' if current_lang == 'ar' else 'ltr'}; text-align: {'right' if current_lang == 'ar' else 'left'}; }}
 div[data-testid="stForm"] {{ direction: {'rtl' if current_lang == 'ar' else 'ltr'}; text-align: {'right' if current_lang == 'ar' else 'left'}; }}
+
+/* توسيط حاوية الشعار الرئيسي وتحسين جودته */
+.stImage {{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+}}
+
+img {{
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}}
 </style>
 """
 st.markdown(_RTL_CSS, unsafe_allow_html=True)
@@ -86,15 +100,16 @@ _bootstrap_db()
 
 
 def _login_screen(session):
+    # استخدام الأعمدة لتوسيط الشعار والعناوين بالمنتصف تماماً بدقة
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         try:
             st.image("logo.jpeg", width=180)
         except Exception:
-            st.markdown(f"<h3 style='text-align: center;'>{t['title']}</h3>", unsafe_allow_html=True)
+            pass
+        st.markdown(f"<h3 style='text-align: center;'>{t['title']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; color: gray;'>{t['subtitle']}</p>", unsafe_allow_html=True)
             
-    st.markdown(f"<h3 style='text-align: center;'>{t['title']}</h3>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align: center; color: gray;'>{t['subtitle']}</p>", unsafe_allow_html=True)
     st.divider()
 
     if st.session_state.get("pending_verification"):
