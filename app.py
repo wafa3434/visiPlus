@@ -6,7 +6,7 @@ from database import init_db, get_session
 from models import User, UserRole, PasswordHistory
 from security import (
     verify_password, hash_password, validate_password_policy,
-    PASSWORD_HISTORY_COUNT, SESSION_IDLE_MINUTES,
+    PASSWORD_HISTORY_COUNT, SESSION_IDLE_MINUTES, encrypt_field,
 )
 from auth import attempt_login, check_session_timeout, touch_session, logout
 from audit import log_action
@@ -94,13 +94,38 @@ ROLE_LABELS = {"it": "تقنية المعلومات", "executive": "الإدار
 @st.cache_resource
 def _bootstrap_db():
     init_db()
+    # التهيئة التلقائية وزرع الحسابات وكلمات المرور المحدثة عند التشغيل
+    session = get_session()
+    users_data = [
+        ("it_admin", "مدير تقنية المعلومات", UserRole.IT, "تقنية المعلومات", "it_admin@hospital.local", "0500000001", "ItAdmin@2026_Secure!"),
+        ("hospital_director", "مدير المستشفى", UserRole.EXECUTIVE, "الإدارة العليا", "director@hospital.local", "0500000002", "Director@2026_Secure!"),
+        ("employee1", "موظف تجريبي", UserRole.EMPLOYEE, "قسم الطوارئ", "employee1@hospital.local", "0500000003", "Employee@2026_Secure!")
+    ]
+    for username, full_name, role, department, email, phone, raw_pass in users_data:
+        user = session.query(User).filter(User.username == username).first()
+        if user:
+            user.password_hash = hash_password(raw_pass)
+            user.must_change_password = False
+        else:
+            new_user = User(
+                username=username,
+                full_name=full_name,
+                role=role,
+                department=department,
+                password_hash=hash_password(raw_pass),
+                must_change_password=False,
+                email_enc=encrypt_field(email),
+                phone_enc=encrypt_field(phone)
+            )
+            session.add(new_user)
+    session.commit()
+    session.close()
     return True
 
 _bootstrap_db()
 
 
 def _login_screen(session):
-    # 1. عرض الشعار في الأعلى بمفرده وبشكل متمركز
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         try:
@@ -108,7 +133,6 @@ def _login_screen(session):
         except Exception:
             pass
             
-    # 2. العناوين تحت الشعار مباشرة
     st.markdown(f"<h3 style='text-align: center;'>{t['title']}</h3>", unsafe_allow_html=True)
     st.markdown(f"<p style='text-align: center; color: gray;'>{t['subtitle']}</p>", unsafe_allow_html=True)
             
