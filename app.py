@@ -1,4 +1,10 @@
-"""
+import streamlit as st
+
+st.set_page_config(
+    page_title="VisiPulse",
+    page_icon="logo.jpeg",  # هنا قمنا بربط الأيقونة بملف اللوقو المرفوع
+    layout="centered"
+)
 VisiPulse - نظام الإنذار المبكر وحوكمة البنية التحتية للمنشآت الصحية
 نقطة تشغيل التطبيق الرئيسية (Entry Point)
 
