@@ -93,6 +93,32 @@ ROLE_LABELS = {"it": "تقنية المعلومات", "executive": "الإدار
 @st.cache_resource
 def _bootstrap_db():
     init_db()
+    session = get_session()
+    
+    # التأكد من وجود المستخدمين وتحديث كلمات المرور تلقائياً لمنع أي خطأ
+    users_data = [
+        ("it_admin", "مدير تقنية المعلومات", UserRole.IT, "تقنية المعلومات", "ItAdmin@2026_Secure!"),
+        ("hospital_director", "مدير المستشفى", UserRole.EXECUTIVE, "الإدارة العليا", "Director@2026_Secure!"),
+        ("employee1", "موظف تجريبي", UserRole.EMPLOYEE, "قسم الطوارئ", "Employee@2026_Secure!")
+    ]
+    
+    for username, full_name, role, department, raw_pass in users_data:
+        user = session.query(User).filter(User.username == username).first()
+        if user:
+            user.password_hash = hash_password(raw_pass)
+            user.must_change_password = False
+        else:
+            new_user = User(
+                username=username,
+                full_name=full_name,
+                role=role,
+                department=department,
+                password_hash=hash_password(raw_pass),
+                must_change_password=False
+            )
+            session.add(new_user)
+    session.commit()
+    session.close()
     return True
 
 _bootstrap_db()
@@ -223,7 +249,7 @@ def main():
             st.session_state.username = st.session_state.get("temp_username")
             st.session_state.role = st.session_state.get("temp_role")
         
-        _login_clean = _login_screen(session)
+        _login_screen(session)
         return
 
     if check_session_timeout():
