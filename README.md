@@ -1,4 +1,7 @@
-# 🏥 VisiPulse
+<p align="center">
+  <img src="logo.jpeg" alt="VisiPulse Logo" width="200"/>
+</p>
+
 ### نظام الإنذار المبكر وحوكمة البنية التحتية للمنشآت الصحية
 
 نظام محوسب مبني بلغة Python باستخدام Streamlit + SQLAlchemy + SQLite، يوفّر ثلاث بوابات
