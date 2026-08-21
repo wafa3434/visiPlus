@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import random
 import streamlit as st
@@ -19,17 +18,7 @@ st.set_page_config(
     page_icon="logo.jpeg",
     layout="wide",
 )
-st.set_page_config(
-    page_title="VisiPulse | نظام الإنذار المبكر وحوكمة البنية التحتية",
-    page_icon="logo.jpeg",
-    layout="wide",
-)
 
-# --- أضيفي كود عرض اللوقو هنا ---
-col1, col2, col3 = st.columns([2, 1, 2])
-with col2:
-    st.image("logo.jpeg", width=150)
-# -----------------------------
 translations = {
     "ar": {
         "title": "VisiPulse - نظام الإنذار المبكر وحوكمة البنية التحتية",
@@ -111,7 +100,7 @@ _bootstrap_db()
 
 
 def _login_screen(session):
-    # 1. عرض الشعار في الأعلى بمفرده
+    # 1. عرض الشعار في الأعلى بمفرده وبشكل متمركز
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         try:
