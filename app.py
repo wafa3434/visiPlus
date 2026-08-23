@@ -119,7 +119,7 @@ _bootstrap_db()
 
 def _login_screen(session):
     # استخدام أعمدة متساوية تماماً لضمان توسط المحتوى في النص المتوسط
-    col1, col2, col3 = st.columns([1, 2, 1])
+   col1, col2, col3 = st.columns([1.2, 2, 1.2])
     with col2:
         try:
             # استخدام أعمدة داخلية لتوسيط صورة st.image بشكل مثالي
