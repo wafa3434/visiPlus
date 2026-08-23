@@ -60,12 +60,16 @@ lang_choice = st.sidebar.selectbox("Language / اللغة", ["العربية", "
 current_lang = "ar" if lang_choice == "العربية" else "en"
 t = translations[current_lang]
 
+# تم تعديل الـ CSS هنا لكي لا يؤثر على حاويات الأعمدة ويمنع انحراف المحتوى لليمين
 _RTL_CSS = f"""
 <style>
-html, body, [class*="css"] {{
+html, body {{
+    direction: {'rtl' if current_lang == 'ar' else 'ltr'};
+    font-family: 'Segoe UI', 'Tahoma', sans-serif;
+}}
+p, span, h1, h2, h3, h4, h5, h6, label {{
     direction: {'rtl' if current_lang == 'ar' else 'ltr'};
     text-align: {'right' if current_lang == 'ar' else 'left'};
-    font-family: 'Segoe UI', 'Tahoma', sans-serif;
 }}
 .stButton>button {{ direction: {'rtl' if current_lang == 'ar' else 'ltr'}; }}
 [data-testid="stMetricValue"], [data-testid="stMetricDelta"] {{ direction: ltr; }}
@@ -124,7 +128,6 @@ _bootstrap_db()
 
 
 def _login_screen(session):
-    # تم توسيط الشعار والعنوان بدقة باستخدام الأعمدة في المنتصف
     col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         try:
