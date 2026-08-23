@@ -95,7 +95,6 @@ def _bootstrap_db():
     init_db()
     session = get_session()
     
-    # التأكد من وجود المستخدمين وتحديث كلمات المرور تلقائياً لمنع أي خطأ
     users_data = [
         ("it_admin", "مدير تقنية المعلومات", UserRole.IT, "تقنية المعلومات", "ItAdmin@2026_Secure!"),
         ("hospital_director", "مدير المستشفى", UserRole.EXECUTIVE, "الإدارة العليا", "Director@2026_Secure!"),
@@ -125,15 +124,16 @@ _bootstrap_db()
 
 
 def _login_screen(session):
-    col1, col2, col3 = st.columns([1, 1.2, 1])
+    # تم توسيط الشعار والعنوان بدقة باستخدام الأعمدة في المنتصف
+    col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
         try:
-            st.image("logo.jpeg", width=180)
+            st.image("logo.jpeg", width=160)
         except Exception:
             pass
             
-    st.markdown(f"<h3 style='text-align: center;'>{t['title']}</h3>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align: center; color: gray;'>{t['subtitle']}</p>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align: center; margin-top: 10px;'>{t['title']}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; color: gray;'>{t['subtitle']}</p>", unsafe_allow_html=True)
             
     st.divider()
 
