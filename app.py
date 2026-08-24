@@ -98,8 +98,13 @@ def _bootstrap_db():
     for username, full_name, role, department, raw_pass in users_data:
         user = session.query(User).filter(User.username == username).first()
         if user:
+            # تحديث إجباري لكلمة المرور والبيانات لتجنب أي تعارض قديم
             user.password_hash = hash_password(raw_pass)
+            user.role = role
+            user.full_name = full_name
+            user.department = department
             user.must_change_password = False
+            user.is_active = True
         else:
             new_user = User(
                 username=username,
@@ -107,7 +112,8 @@ def _bootstrap_db():
                 role=role,
                 department=department,
                 password_hash=hash_password(raw_pass),
-                must_change_password=False
+                must_change_password=False,
+                is_active=True
             )
             session.add(new_user)
     session.commit()
