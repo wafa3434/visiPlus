@@ -136,34 +136,28 @@ def _login_screen(session):
             
     st.divider()
 
-    if st.session_state.get("pending_verification"):
-        _, mid_v, _ = st.columns([1, 1.2, 1])
-        with mid_v:
-            st.info(f"{t['verify_msg']} **{st.session_state.get('demo_code')}**")
-            with st.form("verify_form"):
-                entered_code = st.text_input(t["code_input"], type="password")
-                verify_submitted = st.form_submit_button(t["verify_btn"], width="stretch")
-
-            if verify_submitted:
-                if entered_code == str(st.session_state.get("demo_code")):
-                    st.session_state.authenticated = True
-                    st.session_state.pending_verification = False
-                    st.success("تم التحقق بنجاح")
-                    st.rerun()
-                else:
-                    st.error(t["invalid_code"])
-        return
-
     _, mid, _ = st.columns([1, 1.4, 1])
     with mid:
-        with st.form("login_form"):
-            username = st.text_input(t["username"])
-            password = st.text_input(t["password"], type="password")
-            submitted = st.form_submit_button(t["login_btn"], width="stretch")
-
-        if submitted:
-            # الحل السريع: تجاوز التحقق مؤقتاً والدخول مباشرة بأول مستخدم
-            user = session.query(User).first()
+        st.info("💡 **وضع التنقل السريع بين البوابات:** اختر البوابة المطلوبة للمعاينة المباشرة:")
+        
+        selected_portal = st.selectbox(
+            "اختر البوابة / الدور:",
+            [
+                "بوابة الموظف (تنبؤ الأعطال والإنذار المبكر) - employee1",
+                "بوابة الإدارة العليا (المؤشرات والتقارير) - hospital_director",
+                "بوابة تقنية المعلومات - it_admin"
+            ]
+        )
+        
+        if st.button("دخول سريع للبوابة المختارة", type="primary", use_container_width=True):
+            if "بوابة الموظف" in selected_portal:
+                target_username = "employee1"
+            elif "الإدارة العليا" in selected_portal:
+                target_username = "hospital_director"
+            else:
+                target_username = "it_admin"
+                
+            user = session.query(User).filter(User.username == target_username).first()
             if user:
                 st.session_state.authenticated = True
                 st.session_state.user_id = user.id
@@ -172,7 +166,7 @@ def _login_screen(session):
                 st.session_state.pending_verification = False
                 st.rerun()
             else:
-                st.error("لا توجد بيانات مستخدمين في قاعدة البيانات")
+                st.error("المستخدم غير موجود في قاعدة البيانات")
 
 
 def _force_password_change_screen(session):
