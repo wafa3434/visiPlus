@@ -84,7 +84,6 @@ st.markdown(_RTL_CSS, unsafe_allow_html=True)
 
 ROLE_LABELS = {"it": "تقنية المعلومات", "executive": "الإدارة العليا", "employee": "موظف"}
 
-@st.cache_resource
 def _bootstrap_db():
     init_db()
     session = get_session()
@@ -98,7 +97,6 @@ def _bootstrap_db():
     for username, full_name, role, department, raw_pass in users_data:
         user = session.query(User).filter(User.username == username).first()
         if user:
-            # تحديث إجباري لكلمة المرور والبيانات لتجنب أي تعارض قديم
             user.password_hash = hash_password(raw_pass)
             user.role = role
             user.full_name = full_name
