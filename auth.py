@@ -1,7 +1,11 @@
 """
 VisiPulse - وحدة المصادقة وإدارة الجلسة (Authentication & Session Management)
+
+التحديثات:
+- استخدام التوقيت المعياري الحديث datetime.now(timezone.utc) بدلاً من datetime.utcnow()
+  لتجنب تحذيرات الإهمال (Deprecation Warnings) وضمان التوافق مع باقي الوحدات (مثل Audit.py).
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import streamlit as st
 
@@ -23,13 +27,15 @@ def attempt_login(session, username: str, password: str):
     username = (username or "").strip()
     user = session.query(User).filter(User.username == username).first()
 
+    current_time = datetime.now(timezone.utc)
+
     if not user or not user.is_active:
         log_action(session, username or "-", "-", "محاولة دخول فاشلة",
                    "اسم مستخدم غير موجود أو حساب غير مُفعّل", category="أمن", severity="warning")
         return None, "اسم المستخدم أو كلمة المرور غير صحيحة"
 
-    if user.locked_until and user.locked_until > datetime.utcnow():
-        remaining = max(1, int((user.locked_until - datetime.utcnow()).total_seconds() // 60) + 1)
+    if user.locked_until and user.locked_until > current_time:
+        remaining = max(1, int((user.locked_until - current_time).total_seconds() // 60) + 1)
         log_action(session, username, user.role.value, "محاولة دخول أثناء قفل الحساب",
                    f"متبقٍ نحو {remaining} دقيقة على فك القفل", category="أمن", severity="warning")
         return None, f"الحساب مقفل مؤقتاً بسبب تجاوز عدد محاولات الدخول الخاطئة. حاول مرة أخرى بعد {remaining} دقيقة"
@@ -38,7 +44,7 @@ def attempt_login(session, username: str, password: str):
         user.failed_attempts = (user.failed_attempts or 0) + 1
         severity = "warning"
         if user.failed_attempts >= MAX_FAILED_ATTEMPTS:
-            user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
+            user.locked_until = current_time + timedelta(minutes=LOCKOUT_MINUTES)
             severity = "critical"
         session.commit()
         log_action(session, username, user.role.value, "محاولة دخول فاشلة",
@@ -49,11 +55,11 @@ def attempt_login(session, username: str, password: str):
     # نجاح تسجيل الدخول
     user.failed_attempts = 0
     user.locked_until = None
-    user.last_login = datetime.utcnow()
+    user.last_login = current_time
     session.commit()
     log_action(session, username, user.role.value, "تسجيل دخول ناجح", "-", category="أمن")
 
-    expired = (datetime.utcnow() - user.password_changed_at).days > PASSWORD_EXPIRY_DAYS
+    expired = (current_time - user.password_changed_at).days > PASSWORD_EXPIRY_DAYS
     return user, ("expired" if expired else "ok")
 
 
@@ -62,12 +68,12 @@ def check_session_timeout() -> bool:
     last = st.session_state.get("last_activity")
     if not last:
         return False
-    return datetime.utcnow() - last > timedelta(minutes=SESSION_IDLE_MINUTES)
+    return datetime.now(timezone.utc) - last > timedelta(minutes=SESSION_IDLE_MINUTES)
 
 
 def touch_session():
     """يُحدّث طابع آخر نشاط للجلسة (يُستدعى في كل تفاعل ناجح للمستخدم)."""
-    st.session_state.last_activity = datetime.utcnow()
+    st.session_state.last_activity = datetime.now(timezone.utc)
 
 
 def logout(session=None, username: str = None, role: str = None, reason: str = "تسجيل خروج يدوي"):
