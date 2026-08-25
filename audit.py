@@ -8,12 +8,12 @@ VisiPulse - سجل التدقيق غير القابل للتلاعب (Immutable 
 2. بالإضافة إلى ذلك، تُفرض قيود على مستوى قاعدة البيانات (Triggers في database.py) تمنع
    عمليات UPDATE أو DELETE على جدول audit_log بشكل قاطع.
 
-ملاحظة للإنتاج: هذا يوفر "دليل تلاعب" (Tamper-Evidence) قوياً ضمن نطاق التطبيق. للوصول إلى
-"عدم قابلية تلاعب" كاملة على مستوى البنية التحتية، يُوصى في بيئة الإنتاج بإعادة توجيه السجلات
-إلى نظام SIEM مركزي أو تخزين WORM (Write-Once-Read-Many) بشكل متزامن.
+التحديثات:
+- إضافة قفل التزامن (with_for_update) لمنع تضارب الـ Hashes عند الطلبات المتزامنة.
+- استخدام التوقيت المحلي المتوافق مع UTC عبر datetime.now(timezone.utc).
 """
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 
 from models import AuditLog
 
@@ -27,10 +27,13 @@ def _compute_hash(prev_hash: str, timestamp: datetime, username: str, action: st
 
 def log_action(session, username: str, role: str, action: str, details: str = "",
                 category: str = "عام", severity: str = "info") -> AuditLog:
-    """يسجّل حدثاً جديداً في سجل التدقيق مرتبطاً بسلسلة التجزئات."""
-    last = session.query(AuditLog).order_by(AuditLog.id.desc()).first()
+    """يسجّل حدثاً جديداً في سجل التدقيق مرتبطاً بسلسلة التجزئات مع حماية ضد التزامن."""
+    # استخدام with_for_update لحجز السجل الأخير لمنع تضارب الـ Hashes في حال الطلبات المتزامنة
+    last = session.query(AuditLog).order_by(AuditLog.id.desc()).with_for_update().first()
     prev_hash = last.record_hash if last else GENESIS_HASH
-    ts = datetime.utcnow()
+    
+    # استخدام التوقيت الحديث المعياري
+    ts = datetime.now(timezone.utc)
     record_hash = _compute_hash(prev_hash, ts, username, action, details)
 
     entry = AuditLog(
