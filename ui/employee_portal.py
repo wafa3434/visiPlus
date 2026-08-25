@@ -28,12 +28,14 @@ def _render_alerts_feed(session):
     alerts = session.query(Alert).filter(Alert.status == "نشط").order_by(Alert.created_at.desc()).all()
     if not alerts:
         st.success("لا توجد إنذارات نشطة حالياً ✅")
+        return
 
     for a in alerts:
         with st.container(border=True):
             st.markdown(f"### {SEVERITY_ICONS.get(a.severity, '')} {a.title}")
             st.write(a.description or "-")
-            st.caption(f"القسم: {a.department} | المصدر: {a.source_system} | {a.created_at:%Y-%m-%d %H:%M}")
+            formatted_date = a.created_at.strftime("%Y-%m-%d %H:%M") if a.created_at else "-"
+            st.caption(f"القسم: {a.department} | المصدر: {a.source_system} | {formatted_date}")
 
     st.divider()
     st.info("رصدت عطلاً ميدانياً لم يظهر ضمن الإنذارات أعلاه؟ استخدم تبويب «بلاغاتي» لإرسال بلاغ فوري لفريق الدعم الفني.")
@@ -70,7 +72,13 @@ def _render_my_tickets(session, user):
         st.info("لم تقم بإرسال أي بلاغات بعد.")
         return
 
-    rows = [{"رقم البلاغ": t.ticket_number, "العنوان": t.title, "الحالة": t.status,
-             "الأولوية": t.priority, "تاريخ الإرسال": t.created_at.strftime("%Y-%m-%d %H:%M"),
-             "آخر تحديث": t.updated_at.strftime("%Y-%m-%d %H:%M")} for t in my_tickets]
-    st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+    rows = [{
+        "رقم البلاغ": t.ticket_number, 
+        "العنوان": t.title, 
+        "الحالة": t.status,
+        "الأولوية": t.priority, 
+        "تاريخ الإرسال": t.created_at.strftime("%Y-%m-%d %H:%M") if t.created_at else "-",
+        "آخر تحديث": t.updated_at.strftime("%Y-%m-%d %H:%M") if t.updated_at else "-"
+    } for t in my_tickets]
+    
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
