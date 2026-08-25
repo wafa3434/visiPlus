@@ -1,3 +1,10 @@
+# ==============================================================================
+# Project: VisiPulse - Early Warning & Infrastructure Governance System
+# Author: Wafaa Aglan Al-Khalidi
+# Copyright (c) 2026 Wafaa Aglan Al-Khalidi. All rights reserved.
+# Description: Main entry point and router for VisiPulse Application.
+# ==============================================================================
+
 from datetime import datetime
 import random
 import streamlit as st
@@ -88,6 +95,7 @@ def _bootstrap_db():
     init_db()
     session = get_session()
     
+    # Demo users for system initialization and testing
     users_data = [
         ("it_admin", "مدير تقنية المعلومات", UserRole.IT, "تقنية المعلومات", "ItAdmin@2026_Secure!"),
         ("hospital_director", "مدير المستشفى", UserRole.EXECUTIVE, "الإدارة العليا", "Director@2026_Secure!"),
