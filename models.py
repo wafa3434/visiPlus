@@ -1,14 +1,18 @@
 """
 VisiPulse - نماذج قاعدة البيانات (SQLAlchemy ORM Models)
 نظام الإنذار المبكر وحوكمة البنية التحتية للمنشآت الصحية
+
+التحديثات:
+- استخدام datetime.now(timezone.utc) عبر Lambdas في حقول الـ default لتوحيد التوقيت المعياري.
+- إضافة علاقة ORM بين جدول المستخدمين وسجل كلمات المرور.
 """
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Enum as SAEnum
 )
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -30,7 +34,7 @@ class User(Base):
     department = Column(String(100))
 
     password_hash = Column(String(255), nullable=False)
-    password_changed_at = Column(DateTime, default=datetime.utcnow)
+    password_changed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     must_change_password = Column(Boolean, default=True)
 
     failed_attempts = Column(Integer, default=0)
@@ -41,8 +45,11 @@ class User(Base):
     email_enc = Column(Text)
     phone_enc = Column(Text)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_login = Column(DateTime, nullable=True)
+
+    # علاقة مع سجل كلمات المرور
+    password_histories = relationship("PasswordHistory", back_populates="user", cascade="all, delete-orphan")
 
 
 class PasswordHistory(Base):
@@ -52,7 +59,10 @@ class PasswordHistory(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     password_hash = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # ربط العكس مع جدول المستخدم
+    user = relationship("User", back_populates="password_histories")
 
 
 class AuditLog(Base):
@@ -64,7 +74,7 @@ class AuditLog(Base):
     __tablename__ = "audit_log"
 
     id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     username = Column(String(50))
     role = Column(String(50))
     action = Column(String(150))
@@ -89,8 +99,8 @@ class Ticket(Base):
     location = Column(String(150))
     created_by = Column(String(50))
     assigned_to = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     resolved_at = Column(DateTime, nullable=True)
     resolution_notes = Column(Text, nullable=True)
 
@@ -106,7 +116,7 @@ class Alert(Base):
     department = Column(String(100))
     severity = Column(String(20))     # حرجة / عالية / متوسطة / منخفضة
     status = Column(String(30), default="نشط")  # نشط / تم الحل
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     resolved_at = Column(DateTime, nullable=True)
     created_by = Column(String(50))
 
@@ -138,7 +148,7 @@ class KPI(Base):
     unit = Column(String(30))
     period = Column(String(30))
     category = Column(String(50))   # SLA / جودة / أداء
-    updated_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class Decision(Base):
@@ -152,6 +162,6 @@ class Decision(Base):
     status = Column(String(30), default="بانتظار الاعتماد")  # بانتظار الاعتماد / معتمد / مرفوض
     submitted_by = Column(String(50))
     approved_by = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     decided_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
