@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="VisiPulse Logo" width="220">
+  <img src="logo.jpeg" alt="VisiPulse Logo" width="220">
 </p>
 
 # VisiPulse
