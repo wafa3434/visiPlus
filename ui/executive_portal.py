@@ -4,10 +4,12 @@ VisiPulse - بوابة الإدارة العليا (Executive / Hospital Directo
 """
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 from models import KPI, Decision, Ticket, Alert, AuditLog
 from audit import log_action, verify_chain
+
+SEVERITY_ICONS = {"حرجة": "🔴", "عالية": "🟠", "متوسطة": "🟡", "منخفضة": "🟢"}
 
 
 def render(session, user):
@@ -57,10 +59,11 @@ def _render_kpis(session):
 
     tickets = session.query(Ticket).order_by(Ticket.created_at).all()
     if tickets:
-        df = pd.DataFrame([{"التاريخ": t.created_at.date(), "التصنيف": t.category} for t in tickets])
-        trend = df.groupby(["التاريخ", "التصنيف"]).size().unstack(fill_value=0)
-        st.markdown("**اتجاه البلاغات حسب التصنيف**")
-        st.bar_chart(trend)
+        df = pd.DataFrame([{"التاريخ": t.created_at.date(), "التصنيف": t.category} for t in tickets if t.created_at])
+        if not df.empty:
+            trend = df.groupby(["التاريخ", "التصنيف"]).size().unstack(fill_value=0)
+            st.markdown("**اتجاه البلاغات حسب التصنيف**")
+            st.bar_chart(trend)
 
 
 def _render_decisions(session, user):
@@ -73,13 +76,14 @@ def _render_decisions(session, user):
         with st.container(border=True):
             st.markdown(f"#### {d.title}")
             st.write(d.description)
-            st.caption(f"التصنيف: {d.category} | مقدَّم من: {d.submitted_by} | {d.created_at:%Y-%m-%d}")
+            formatted_date = d.created_at.strftime("%Y-%m-%d") if d.created_at else "-"
+            st.caption(f"التصنيف: {d.category} | مقدَّم من: {d.submitted_by} | {formatted_date}")
             c1, c2 = st.columns(2)
             with c1:
                 if st.button("✅ اعتماد", key=f"approve_{d.id}"):
                     d.status = "معتمد"
                     d.approved_by = user.username
-                    d.decided_at = datetime.utcnow()
+                    d.decided_at = datetime.now(timezone.utc)
                     session.commit()
                     log_action(session, user.username, user.role.value, "اعتماد قرار", d.title,
                                category="حوكمة", severity="warning")
@@ -89,7 +93,7 @@ def _render_decisions(session, user):
                 if st.button("❌ رفض", key=f"reject_{d.id}"):
                     d.status = "مرفوض"
                     d.approved_by = user.username
-                    d.decided_at = datetime.utcnow()
+                    d.decided_at = datetime.now(timezone.utc)
                     session.commit()
                     log_action(session, user.username, user.role.value, "رفض قرار", d.title,
                                category="حوكمة", severity="warning")
@@ -109,10 +113,14 @@ def _render_decisions(session, user):
     history = (session.query(Decision).filter(Decision.status != "بانتظار الاعتماد")
                .order_by(Decision.decided_at.desc()).all())
     if history:
-        rows = [{"القرار": d.title, "الحالة": d.status, "اعتمده": d.approved_by,
-                 "التاريخ": d.decided_at.strftime("%Y-%m-%d") if d.decided_at else "-"} for d in history]
+        rows = [{
+            "القرار": d.title, 
+            "الحالة": d.status, 
+            "اعتمده": d.approved_by,
+            "التاريخ": d.decided_at.strftime("%Y-%m-%d") if d.decided_at else "-"
+        } for d in history]
         df = pd.DataFrame(rows)
-        st.dataframe(df, width="stretch", hide_index=True)
+        st.dataframe(df, use_container_width=True, hide_index=True)
         st.download_button("⬇️ تصدير تقرير القرارات CSV", df.to_csv(index=False).encode("utf-8-sig"),
                             file_name="compliance_decisions_report.csv", mime="text/csv")
     else:
