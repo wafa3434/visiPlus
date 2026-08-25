@@ -2,26 +2,24 @@
 VisiPulse - وحدة الأمن والحوكمة (Security & Governance Module)
 - تجزئة كلمات المرور (bcrypt)
 - سياسة كلمة مرور صارمة متوافقة مع متطلبات الهيئة الوطنية للأمن السيبراني (NCA ECC)
-- تشفير الحقول الحساسة (Fernet) بالاعتماد على مفتاح من متغيرات البيئة (.env)
+- تشفير الحقول الحساسة (Fernet) بالاعتماد على مفتاح من متغيرات البيئة (.env) أو Streamlit Secrets
 - إعدادات القفل المؤقت للحساب ومهلة خمول الجلسة (تُقرأ من .env)
 """
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 import bcrypt
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
+import streamlit as st
 
 load_dotenv()
 
 
 # ============================================================
-# التشفير - Fernet (تشفير متماثل معتمد على مفتاح البيئة)
-import os
-import streamlit as st
-
-# دعم قراءة مفتاح التشفير من Streamlit Secrets أو من النظام المحلي
+# التشفير - Fernet (تشفير متماثل معتمد على مفتاح البيئة أو الأسرار)
+# ============================================================
 try:
     ENCRYPTION_KEY = st.secrets["VISIPULSE_ENCRYPTION_KEY"]
 except (KeyError, FileNotFoundError):
@@ -29,6 +27,10 @@ except (KeyError, FileNotFoundError):
 
 if not ENCRYPTION_KEY:
     raise RuntimeError("خطأ حرج: لم يتم العثور على مفتاح التشفير VISIPULSE_ENCRYPTION_KEY.")
+
+# تهيئة كائن Fernet بشكل صحيح لتجنب خطأ NameError
+_fernet = Fernet(ENCRYPTION_KEY.encode("utf-8") if isinstance(ENCRYPTION_KEY, str) else ENCRYPTION_KEY)
+
 
 def encrypt_field(value):
     """يشفّر قيمة نصية حساسة (بريد إلكتروني، هاتف، عنوان IP...) قبل تخزينها."""
@@ -109,4 +111,10 @@ def validate_password_policy(password: str, username: str = ""):
 
 
 def days_since(dt: datetime) -> int:
-    return (datetime.utcnow() - dt).days
+    """يحسب عدد الأيام المنقضية منذ تاريخ معين مع مراعاة التوقيت المعياري UTC."""
+    if not dt:
+        return 0
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    return (now - dt).days
