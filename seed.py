@@ -154,3 +154,13 @@ def seed():
 
 if __name__ == "__main__":
     seed()
+import pandas as pd
+from database import engine
+
+# تصدير كل جدول إلى ملف CSV مستقل لربطها في Power BI
+tables = ["users", "password_history", "audit_log", "tickets", "alerts", "system_assets", "kpis", "decisions"]
+
+for table in tables:
+    df = pd.read_sql_table(table, con=engine)
+    df.to_csv(f"{table}.csv", index=False)
+    print(f"تم تصدير {table}.csv بنجاح!")
