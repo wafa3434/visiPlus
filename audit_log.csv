@@ -1,0 +1,2 @@
+id,timestamp,username,role,action,category,severity,details,prev_hash,record_hash
+1,2026-08-29 22:14:32.276915,system,system,تهيئة النظام,نظام,info,تم إنشاء الحسابات الأولية,0000000000000000000000000000000000000000000000000000000000000000,bbd78f6c6cec74088a5962d8f9255e87791ab00283b715b8ffc0c15c9da457dc

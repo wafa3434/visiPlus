@@ -1,0 +1,4 @@
+id,name,asset_type,department,ip_enc,status,criticality,last_maintenance,owner
+1,خادم نظام معلومات المستشفى HIS-01,خادم,الصحة الإلكترونية,gAAAAABqk1nIs0tAguH28uB7_DS8D8rApK4L393KsdOyTXET-WiWr1f7wS9wOZwW8S88juzbkLR0DiArCrkzAjJoUka8naYyPQ==,يعمل,حرجة,,it_admin
+2,جهاز توجيه الشبكة الرئيسي - المبنى A,جهاز شبكة,البنية التحتية,gAAAAABqk1nIbD4OmRmEf9bZibCCrJ0r89eX2YtNI6PtzztGxvI9rWXUh8dzhjlMEd04cYZjFJcLJW_pAPmX-5Oakyi5N5dm4Q==,يعمل,حرجة,,it_admin
+3,تطبيق حجز المواعيد الإلكتروني,تطبيق,الأنظمة والتطبيقات,gAAAAABqk1nI0pt4TnFaFJTcZHYgJBNyhEbyxAjANTxI7QvOKKxs27f7Pj5zgJOEoFrIxSy8DVJv0Em4St-_mITvluCXkfEzxg==,يعمل,متوسطة,,it_admin
